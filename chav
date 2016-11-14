@@ -1,0 +1,41 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Sep 14 08:41:20 2016
+
+@author: Juan Manuel Romero Arguello
+"""
+
+import numpy as np
+from numpy import genfromtxt
+#Get data from csv files
+dataIN = genfromtxt('PowRx.csv', delimiter=',')
+dataOUT=genfromtxt('ChAv.csv', delimiter=',') 
+numchannels=dataOUT.shape[1]
+datasize=dataOUT.shape[0]
+prediction=np.zeros(datasize)
+channel=0
+tum=10*1000    #Time (samples) to Update transisiton Matrix
+ns=100      #Number of samples used to create the transisiton matrix
+error=np.zeros(numchannels)
+error2=np.zeros((21,numchannels))
+for g in range (-94,-73):
+    ch_av=np.greater_equal(dataIN,g)
+    for h in range (0,numchannels):
+        channel=h
+        #Estimates de Channel Availability and updates the 
+        #transition matrix every tum
+        for i in range(ns,datasize,tum):
+            tm=sum(ch_av[i-ns:i,channel])/ns #prediction matrix
+            prediction[i]=ch_av[i,channel]
+            for j in range(i+1,i+tum):
+                if j>datasize-1:
+                    break
+    #            if prediction[i]==0 : #if previous data is 0 then
+    #                prediction[j]=round(1-tm)                
+    #            else:
+    #                prediction[j]=round(tm)
+                prediction[j]=(round(tm)==1)
+        error[h]=sum(np.not_equal(prediction[ns:],ch_av[ns:,channel]))/(datasize-ns)   
+    error2[g+94,:]=error
+    #    np.logical_and(prediction[ns:], dataOUT[ns:,channel], accum)
+    #    error2[channel]=((datasize-ns)-sum(accum))/(datasize-ns)
